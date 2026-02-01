@@ -1,0 +1,46 @@
+[
+    {
+        "Year": 1,
+        "H-Score": 4,
+        "Calculated_Params": {
+            "saturation": 40,
+            "hue_degrees": 160,
+            "keywords": "calm, simple, smooth transitions, foundational structure",
+            "texture": "low textural complexity, smooth surface, soft gradient"
+        },
+        "Generated_Prompt": "Create a hyper-abstract digital painting for Academic Year 1. The art style must convey **academic difficulty** through its parameters. The primary color is based on a **Hue of 160\u00b0** (using the HSL color model concept) with a **Saturation of 40%**. The image should have **low textural complexity, smooth surface, soft gradient**. Keywords for the emotional feeling of the year: **calm, simple, smooth transitions, foundational structure**. The final image must be pure abstract art."
+    },
+    {
+        "Year": 2,
+        "H-Score": 9,
+        "Calculated_Params": {
+            "saturation": 90,
+            "hue_degrees": 26,
+            "keywords": "intense, chaotic, overwhelming pressure, fragmented forms",
+            "texture": "high textural complexity, deep impasto, sharp contrast"
+        },
+        "Generated_Prompt": "Create a hyper-abstract digital painting for Academic Year 2. The art style must convey **academic difficulty** through its parameters. The primary color is based on a **Hue of 26\u00b0** (using the HSL color model concept) with a **Saturation of 90%**. The image should have **high textural complexity, deep impasto, sharp contrast**. Keywords for the emotional feeling of the year: **intense, chaotic, overwhelming pressure, fragmented forms**. The final image must be pure abstract art."
+    },
+    {
+        "Year": 3,
+        "H-Score": 7,
+        "Calculated_Params": {
+            "saturation": 70,
+            "hue_degrees": 80,
+            "keywords": "focused, deep, intertwined complexity, rich visual density",
+            "texture": "medium textural complexity, blended layers, muted contrast"
+        },
+        "Generated_Prompt": "Create a hyper-abstract digital painting for Academic Year 3. The art style must convey **academic difficulty** through its parameters. The primary color is based on a **Hue of 80\u00b0** (using the HSL color model concept) with a **Saturation of 70%**. The image should have **medium textural complexity, blended layers, muted contrast**. Keywords for the emotional feeling of the year: **focused, deep, intertwined complexity, rich visual density**. The final image must be pure abstract art."
+    },
+    {
+        "Year": 4,
+        "H-Score": 5,
+        "Calculated_Params": {
+            "saturation": 50,
+            "hue_degrees": 133,
+            "keywords": "calm, simple, smooth transitions, foundational structure",
+            "texture": "low textural complexity, smooth surface, soft gradient"
+        },
+        "Generated_Prompt": "Create a hyper-abstract digital painting for Academic Year 4. The art style must convey **academic difficulty** through its parameters. The primary color is based on a **Hue of 133\u00b0** (using the HSL color model concept) with a **Saturation of 50%**. The image should have **low textural complexity, smooth surface, soft gradient**. Keywords for the emotional feeling of the year: **calm, simple, smooth transitions, foundational structure**. The final image must be pure abstract art."
+    }
+]
