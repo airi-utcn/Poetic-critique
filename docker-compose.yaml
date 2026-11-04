@@ -1,0 +1,22 @@
+services:
+  python-engine:
+    build:
+      context: ./java-backend
+      dockerfile: Dockerfile.python
+    ports:
+      - "5000:5000"
+    environment:
+      - HF_TOKEN=${HF_TOKEN}
+    restart: unless-stopped
+
+  java-backend:
+    build:
+      context: ./java-backend
+      dockerfile: Dockerfile.java
+    ports:
+      - "80:8080"
+    volumes:
+      - ./best.txt:/app/best.txt
+    depends_on:
+      - python-engine
+    restart: unless-stopped

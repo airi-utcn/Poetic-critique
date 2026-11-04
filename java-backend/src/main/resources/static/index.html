@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poetic Critique</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital@0;1&display=swap');
+
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-panel: #171717;
+            --text-primary: #ededed;
+            --text-muted: #a3a3a3;
+            --accent: #3b82f6;
+            --border: #262626;
+            --sidebar-width: 260px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        aside {
+            width: var(--sidebar-width);
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: margin-left 0.3s ease;
+        }
+
+        aside.collapsed {
+            margin-left: calc(var(--sidebar-width) * -1);
+        }
+
+        aside h2 {
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            margin-bottom: 25px;
+        }
+
+        .nav-btn {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 12px 16px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        #main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-main);
+        }
+
+        #toggle-sidebar-btn {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        #toggle-sidebar-btn:hover {
+            background: #262626;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #poem-section {
+            flex: 1.8;
+            padding: 40px 60px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .stanza {
+            font-family: 'Lora', serif;
+            font-size: 1.7rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            opacity: 0.7;
+            transition: all 0.5s ease;
+        }
+
+        .stanza.newest {
+            color: var(--text-primary);
+            opacity: 1;
+            border-left: 2px solid var(--accent);
+            padding-left: 20px;
+        }
+
+        #critic-section {
+            flex: 1;
+            min-width: 350px;
+            max-width: 450px;
+            border-left: 1px solid var(--border);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            overflow-y: auto;
+        }
+
+        .dashboard-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .dashboard-card h3 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .metric { margin-bottom: 15px; }
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .metric-bar-bg {
+            height: 6px;
+            background-color: var(--bg-main);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .metric-bar-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .critic-note-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .critic-note {
+            font-style: italic;
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 1.05rem;
+            padding: 15px;
+            background-color: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
+        .critic-explanation {
+            font-size: 0.85rem;
+            color: #ef4444;
+            line-height: 1.5;
+            padding-left: 4px;
+        }
+
+        .critic-explanation.ok {
+            color: #10b981;
+        }
+
+        .action-btn {
+            background-color: var(--text-primary);
+            color: var(--bg-main);
+            border: none;
+            padding: 14px;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .action-btn:hover { background-color: #d4d4d8; }
+        .action-btn.active { background-color: #ef4444; color: white; }
+        .action-btn.active:hover { background-color: #dc2626; }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: currentColor;
+            display: none;
+        }
+        .action-btn.active .status-dot {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        .view-panel {
+            display: none;
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+
+        .stat-block { margin-bottom: 25px; }
+        .stat-block h4 { color: var(--text-primary); font-size: 1.1rem; margin-bottom: 8px; }
+        .stat-block p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+
+    </style>
+</head>
+<body>
+
+<aside id="sidebar">
+    <h2>Poetic Critique</h2>
+    <button class="nav-btn active" onclick="switchView('split')">Live Generation</button>
+    <button class="nav-btn" onclick="switchView('stats')">Stats Explained</button>
+    <button class="nav-btn" onclick="switchView('volume')">Saved Collection</button>
+</aside>
+
+<div id="main-wrapper">
+    <header>
+        <button id="toggle-sidebar-btn" onclick="toggleSidebar()">☰ Menu</button>
+    </header>
+
+    <main id="split-view" class="content-area" style="display: flex;">
+        <section id="poem-section"></section>
+
+        <section id="critic-section">
+            <button id="auto-gen-btn" class="action-btn" onclick="toggleGeneration()">
+                <span class="status-dot"></span>
+                <span id="btn-text">Start Continuous Generation</span>
+            </button>
+
+            <div class="dashboard-card">
+                <h3>Live Telemetry</h3>
+
+                <div class="metric">
+                    <div class="metric-header">
+                        <span>Sentiment (VADER)</span>
+                        <span id="val-sentiment">0.00</span>
+                    </div>
+                    <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-sentiment" style="background-color: var(--accent);"></div></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-header">
+                        <span>Readability Grade</span>
+                        <span id="val-readability">0.0</span>
+                    </div>
+                    <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-readability" style="background-color: #10b981;"></div></div>
+                </div>
+
+                <div class="metric">
+                    <div class="metric-header">
+                        <span>Symbol Saturation</span>
+                        <span id="val-symbol">0%</span>
+                    </div>
+                    <div class="metric-bar-bg"><div class="metric-bar-fill" id="bar-symbol" style="background-color: #8b5cf6;"></div></div>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3 id="feedback-title">System Note</h3>
+                <div class="critic-note-container">
+                    <div class="critic-note" id="val-note">"Awaiting engine initialization..."</div>
+                    <div class="critic-explanation" id="val-explanation">Click start to awaken the critic.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="stats-view" class="view-panel">
+        <h1 style="font-size:2rem; margin-bottom:30px; font-weight:600;">The Critic's Rubric</h1>
+        <p style="color:var(--text-muted); margin-bottom:30px; font-size:1.1rem;">
+            The backend engine automatically scores your verse across three technical axes to ensure it meets Romantic standards.
+        </p>
+
+        <div class="dashboard-card stat-block">
+            <h4>Flesch-Kincaid Grade</h4>
+            <p><strong>Threshold: ≤ 8.0.</strong> This metric measures syntactic entanglement and vocabulary complexity. If the grade exceeds 8.0, the language is too academic or convoluted. The critic will demand simpler, more direct metaphors.</p>
+        </div>
+
+        <div class="dashboard-card stat-block">
+            <h4>VADER Sentiment</h4>
+            <p><strong>Range: [-1.0 to +1.0].</strong> Evaluates the emotional polarity of the stanza. Highly negative scores indicate grief and melancholy (favorable for Eminescu style), while highly positive scores indicate joy. Stagnation triggers the critic to demand a shift.</p>
+        </div>
+
+        <div class="dashboard-card stat-block">
+            <h4>Symbol Saturation</h4>
+            <p><strong>Target: > 10%.</strong> Measures the density of specific predefined Romantic symbols (e.g., moon, willow, grief, tear) against the total word count. If saturation drops too low, the verse is deemed too sterile.</p>
+        </div>
+    </div>
+
+    <div id="volume-view" class="view-panel">
+        <h1 style="font-size:2rem; margin-bottom:30px; font-weight:600;">Saved Collection</h1>
+        <div id="volume-list" style="display: flex; flex-direction: column; gap: 20px;"></div>
+    </div>
+</div>
+
+<script>
+    let fullContext = "";
+    let previousSentiments = [];
+    let isGenerating = false;
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        sidebar.classList.toggle('collapsed');
+    }
+
+    async function toggleGeneration() {
+        isGenerating = !isGenerating;
+        const btn = document.getElementById('auto-gen-btn');
+        const btnText = document.getElementById('btn-text');
+
+        if (isGenerating) {
+            btn.classList.add('active');
+            btnText.innerText = "Stop Generation";
+            runEngineLoop();
+        } else {
+            btn.classList.remove('active');
+            btnText.innerText = "Start Continuous Generation";
+        }
+    }
+
+    function evaluateMetrics(readability, symbolRatio, sentiment) {
+        let note = "";
+        let explanation = "";
+        let isOk = false;
+
+        if (readability > 8.0) {
+            note = "The syntax is too tangled and academic.";
+            explanation = `Metric violation: Readability grade is ${readability.toFixed(1)} (Max allowed is 8.0). The verse is too complex. Simplify the language.`;
+        } else if (symbolRatio < 0.10) {
+            note = "A sterile verse. Where is the soul of nature?";
+            explanation = `Metric violation: Symbol saturation is ${Math.round(symbolRatio * 100)}% (Minimum is 10%). The text lacks natural romantic anchors (like moon, stars, tears).`;
+        } else if (sentiment > 0.5) {
+            note = "Too joyful. Eminescu would weep at this optimism.";
+            explanation = `Metric violation: Sentiment is +${sentiment.toFixed(2)}. The verse is too positive. It needs more melancholy and grief.`;
+        } else {
+            note = "A passable expression of melancholy.";
+            explanation = "All metrics are within acceptable Romantic thresholds.";
+            isOk = true;
+        }
+
+        return { note, explanation, isOk };
+    }
+
+    async function runEngineLoop() {
+        if (!isGenerating) return;
+
+        try {
+            const res = await fetch('/api/poem/next', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ context: fullContext, previousSentiments: previousSentiments })
+            });
+
+            if (!res.ok) throw new Error("Server response wasn't OK");
+            const data = await res.json();
+
+            document.getElementById('feedback-title').innerText = "The Critic's Voice";
+
+            const poemContainer = document.getElementById('poem-section');
+            const oldNewest = poemContainer.querySelector('.newest');
+            if (oldNewest) {
+                oldNewest.classList.remove('newest');
+                oldNewest.style.borderLeft = 'none';
+                oldNewest.style.paddingLeft = '0';
+            }
+
+            const stanzaDiv = document.createElement('div');
+            stanzaDiv.className = 'stanza newest';
+            stanzaDiv.innerHTML = data.stanza.replace(/\n/g, '<br>');
+            poemContainer.prepend(stanzaDiv);
+
+            fullContext += data.stanza + "\n\n";
+            previousSentiments.push(data.sentimentCompound);
+
+            document.getElementById('val-sentiment').innerText = data.sentimentCompound.toFixed(2);
+            document.getElementById('val-readability').innerText = data.readabilityGrade.toFixed(1);
+            document.getElementById('val-symbol').innerText = Math.round(data.symbolRatio * 100) + '%';
+
+            const feedback = evaluateMetrics(data.readabilityGrade, data.symbolRatio, data.sentimentCompound);
+            document.getElementById('val-note').innerText = `"${feedback.note}"`;
+            document.getElementById('val-explanation').innerText = feedback.explanation;
+            document.getElementById('val-explanation').className = feedback.isOk ? "critic-explanation ok" : "critic-explanation";
+
+            let sentPercent = ((data.sentimentCompound + 1) / 2) * 100;
+            document.getElementById('bar-sentiment').style.width = `${Math.max(0, Math.min(100, sentPercent))}%`;
+
+            let readPercent = (data.readabilityGrade / 15) * 100;
+            document.getElementById('bar-readability').style.width = `${Math.max(0, Math.min(100, readPercent))}%`;
+
+            let symPercent = (data.symbolRatio / 0.3) * 100;
+            document.getElementById('bar-symbol').style.width = `${Math.max(0, Math.min(100, symPercent))}%`;
+
+        } catch (err) {
+            document.getElementById('val-note').innerText = '"Connection lost."';
+            document.getElementById('val-explanation').innerText = "Make sure the Java and Python servers are running.";
+            toggleGeneration();
+            return;
+        }
+
+        if (isGenerating) {
+            setTimeout(runEngineLoop, 15000);
+        }
+    }
+
+    function switchView(viewName) {
+        document.getElementById('split-view').style.display = viewName === 'split' ? 'flex' : 'none';
+        document.getElementById('stats-view').style.display = viewName === 'stats' ? 'block' : 'none';
+        document.getElementById('volume-view').style.display = viewName === 'volume' ? 'block' : 'none';
+
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        if (viewName === 'volume') fetchVolume();
+    }
+
+    async function fetchVolume() {
+        try {
+            const res = await fetch('/api/poem/volume');
+            const poems = await res.json();
+            const list = document.getElementById('volume-list');
+            list.innerHTML = poems.length === 0 ? '<p style="color:var(--text-muted);">No poems saved yet.</p>' : '';
+            poems.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'dashboard-card';
+                item.style.fontFamily = "'Lora', serif";
+                item.style.fontSize = "1.2rem";
+                item.style.lineHeight = "1.6";
+                item.style.color = "var(--text-muted)";
+                item.innerHTML = p.replace(/\n/g, '<br>');
+                list.appendChild(item);
+            });
+        } catch(err) {
+            document.getElementById('volume-list').innerHTML = '<p style="color:var(--text-muted);">Failed to load volume.</p>';
+        }
+    }
+</script>
+</body>
+</html>

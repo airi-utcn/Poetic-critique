@@ -1,0 +1,14 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir flask flask-cors nltk textstat transformers \
+    torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+
+COPY engine.py .
+
+RUN python -m nltk.downloader punkt vader_lexicon
+
+EXPOSE 5000
+
+CMD ["python", "engine.py"]
