@@ -4,5 +4,7 @@ import java.util.List;
 
 public record PoemRequest(
         String context,
-        List<Double> previousSentiments
+        List<Double> previousSentiments,
+        String poetMode,
+        List<String> activeConstraints
 ) {}

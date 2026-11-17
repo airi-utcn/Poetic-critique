@@ -7,6 +7,10 @@ services:
       - "5000:5000"
     environment:
       - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./java-backend/eminescu_adapter_qwen:/app/eminescu_adapter_qwen
+      - ./java-backend/yuan_adapter_qwen:/app/yuan_adapter_qwen
+      - hf_cache:/root/.cache/huggingface
     restart: unless-stopped
 
   java-backend:
@@ -16,7 +20,10 @@ services:
     ports:
       - "80:8080"
     volumes:
-      - ./best.txt:/app/best.txt
+      - ./saved_poems:/app/saved_poems
     depends_on:
       - python-engine
     restart: unless-stopped
+
+volumes:
+  hf_cache:

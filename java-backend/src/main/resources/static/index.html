@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Poetic Critique</title>
+    <title>Poetic Critique Architecture</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital@0;1&display=swap');
 
@@ -47,7 +47,39 @@
             font-size: 1.5rem;
             color: var(--text-primary);
             letter-spacing: -0.5px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
+        }
+
+        .poet-selector-container {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .poet-selector-container label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #poet-selector {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        #poet-selector:focus {
+            border-color: var(--accent);
         }
 
         .nav-btn {
@@ -256,9 +288,18 @@
 
 <aside id="sidebar">
     <h2>Poetic Critique</h2>
-    <button class="nav-btn active" onclick="switchView('split')">Live Generation</button>
-    <button class="nav-btn" onclick="switchView('stats')">Stats Explained</button>
-    <button class="nav-btn" onclick="switchView('volume')">Saved Collection</button>
+
+    <div class="poet-selector-container">
+        <label for="poet-selector">Active Tradition</label>
+        <select id="poet-selector" onchange="handlePoetSwitch()">
+            <option value="eminescu">Mihai Eminescu (Romantic)</option>
+            <option value="yuan">Yuan Hongdao (Gong'an)</option>
+        </select>
+    </div>
+
+    <button class="nav-btn active" onclick="switchView('split', this)">Live Generation</button>
+    <button class="nav-btn" onclick="switchView('stats', this)">Stats Explained</button>
+    <button class="nav-btn" onclick="switchView('volume', this)">Saved Collection</button>
 </aside>
 
 <div id="main-wrapper">
@@ -316,22 +357,25 @@
     <div id="stats-view" class="view-panel">
         <h1 style="font-size:2rem; margin-bottom:30px; font-weight:600;">The Critic's Rubric</h1>
         <p style="color:var(--text-muted); margin-bottom:30px; font-size:1.1rem;">
-            The backend engine automatically scores your verse across three technical axes to ensure it meets Romantic standards.
+            The backend engine automatically scores your verse across three technical axes based on empirical corpus analysis. The strict thresholds update dynamically depending on the active poetic tradition.
         </p>
 
         <div class="dashboard-card stat-block">
             <h4>Flesch-Kincaid Grade</h4>
-            <p><strong>Threshold: ≤ 8.0.</strong> This metric measures syntactic entanglement and vocabulary complexity. If the grade exceeds 8.0, the language is too academic or convoluted. The critic will demand simpler, more direct metaphors.</p>
+            <p><strong>Eminescu: 4.82 – 10.48 | Yuan Hongdao: 5.13 – 7.94</strong><br>
+                Measures syntactic entanglement and vocabulary complexity. The Gong'an school requires tighter, more immediate phrasing, while Romanticism tolerates deeper academic structures. The critic will demand simpler, more direct metaphors if the upper bound is breached.</p>
         </div>
 
         <div class="dashboard-card stat-block">
             <h4>VADER Sentiment</h4>
-            <p><strong>Range: [-1.0 to +1.0].</strong> Evaluates the emotional polarity of the stanza. Highly negative scores indicate grief and melancholy (favorable for Eminescu style), while highly positive scores indicate joy. Stagnation triggers the critic to demand a shift.</p>
+            <p><strong>Eminescu: -0.58 to 0.91 | Yuan Hongdao: -0.55 to 0.88</strong><br>
+                Evaluates the emotional polarity of the stanza. While both poets explore melancholy, stagnation triggers the critic to demand an affective shift to prevent stylistic fatigue.</p>
         </div>
 
         <div class="dashboard-card stat-block">
             <h4>Symbol Saturation</h4>
-            <p><strong>Target: > 10%.</strong> Measures the density of specific predefined Romantic symbols (e.g., moon, willow, grief, tear) against the total word count. If saturation drops too low, the verse is deemed too sterile.</p>
+            <p><strong>Eminescu: > 3.5% | Yuan Hongdao: > 5.7%</strong><br>
+                Measures the density of specific predefined symbols against total word count using dynamic, tradition-specific lexicons. If saturation drops too low, the verse is deemed too sterile and lacking in either romantic grounding or spontaneous xingling observation.</p>
         </div>
     </div>
 
@@ -344,63 +388,89 @@
 <script>
     let fullContext = "";
     let previousSentiments = [];
+    let lastConstraints = [];
     let isGenerating = false;
+    let isFetching = false;
+    let loopTimer = null;
+    let currentAbortController = null;
 
     function toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('collapsed');
     }
 
-    async function toggleGeneration() {
-        isGenerating = !isGenerating;
+    function stopLoopCleanup() {
+        isGenerating = false;
+        if (loopTimer) {
+            clearTimeout(loopTimer);
+            loopTimer = null;
+        }
+        if (currentAbortController) {
+            currentAbortController.abort();
+            currentAbortController = null;
+        }
+        isFetching = false;
+
         const btn = document.getElementById('auto-gen-btn');
         const btnText = document.getElementById('btn-text');
+        btn.classList.remove('active');
+        btnText.innerText = "Start Continuous Generation";
+        document.getElementById('poet-selector').disabled = false;
+    }
 
-        if (isGenerating) {
-            btn.classList.add('active');
-            btnText.innerText = "Stop Generation";
-            runEngineLoop();
-        } else {
-            btn.classList.remove('active');
-            btnText.innerText = "Start Continuous Generation";
+    function handlePoetSwitch() {
+        stopLoopCleanup();
+        fullContext = "";
+        previousSentiments = [];
+        lastConstraints = [];
+        document.getElementById('poem-section').innerHTML = "";
+        document.getElementById('val-note').innerText = '"Tradition switched. Awaiting generation..."';
+        document.getElementById('val-explanation').innerText = "Context cleared.";
+        document.getElementById('val-explanation').className = "critic-explanation ok";
+
+        if (document.getElementById('volume-view').style.display === 'block') {
+            fetchVolume();
         }
     }
 
-    function evaluateMetrics(readability, symbolRatio, sentiment) {
-        let note = "";
-        let explanation = "";
-        let isOk = false;
-
-        if (readability > 8.0) {
-            note = "The syntax is too tangled and academic.";
-            explanation = `Metric violation: Readability grade is ${readability.toFixed(1)} (Max allowed is 8.0). The verse is too complex. Simplify the language.`;
-        } else if (symbolRatio < 0.10) {
-            note = "A sterile verse. Where is the soul of nature?";
-            explanation = `Metric violation: Symbol saturation is ${Math.round(symbolRatio * 100)}% (Minimum is 10%). The text lacks natural romantic anchors (like moon, stars, tears).`;
-        } else if (sentiment > 0.5) {
-            note = "Too joyful. Eminescu would weep at this optimism.";
-            explanation = `Metric violation: Sentiment is +${sentiment.toFixed(2)}. The verse is too positive. It needs more melancholy and grief.`;
+    function toggleGeneration() {
+        if (isGenerating) {
+            stopLoopCleanup();
         } else {
-            note = "A passable expression of melancholy.";
-            explanation = "All metrics are within acceptable Romantic thresholds.";
-            isOk = true;
+            isGenerating = true;
+            const btn = document.getElementById('auto-gen-btn');
+            const btnText = document.getElementById('btn-text');
+            btn.classList.add('active');
+            btnText.innerText = "Stop Generation";
+            document.getElementById('poet-selector').disabled = true;
+            runEngineLoop();
         }
-
-        return { note, explanation, isOk };
     }
 
     async function runEngineLoop() {
-        if (!isGenerating) return;
+        if (!isGenerating || isFetching) return;
+
+        isFetching = true;
+        currentAbortController = new AbortController();
+        const poetMode = document.getElementById('poet-selector').value;
 
         try {
             const res = await fetch('/api/poem/next', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ context: fullContext, previousSentiments: previousSentiments })
+                signal: currentAbortController.signal,
+                body: JSON.stringify({
+                    context: fullContext,
+                    previousSentiments: previousSentiments,
+                    poetMode: poetMode,
+                    activeConstraints: lastConstraints
+                })
             });
 
             if (!res.ok) throw new Error("Server response wasn't OK");
             const data = await res.json();
+
+            if (!isGenerating) return;
 
             document.getElementById('feedback-title').innerText = "The Critic's Voice";
 
@@ -424,10 +494,19 @@
             document.getElementById('val-readability').innerText = data.readabilityGrade.toFixed(1);
             document.getElementById('val-symbol').innerText = Math.round(data.symbolRatio * 100) + '%';
 
-            const feedback = evaluateMetrics(data.readabilityGrade, data.symbolRatio, data.sentimentCompound);
-            document.getElementById('val-note').innerText = `"${feedback.note}"`;
-            document.getElementById('val-explanation').innerText = feedback.explanation;
-            document.getElementById('val-explanation').className = feedback.isOk ? "critic-explanation ok" : "critic-explanation";
+            const constraints = data.newConstraints || [];
+            const noteText = data.criticNote || "";
+            lastConstraints = constraints;
+
+            const isSaved = constraints.length === 0 && data.stanza && data.stanza.length > 10 && !data.stanza.includes("...");
+
+            document.getElementById('val-note').innerText = `"${noteText}"`;
+            document.getElementById('val-explanation').innerText = isSaved
+                ? "All empirical thresholds satisfied — saved to collection."
+                : `Active constraints: ${constraints.join(", ")}`;
+            document.getElementById('val-explanation').className = isSaved
+                ? "critic-explanation ok"
+                : "critic-explanation";
 
             let sentPercent = ((data.sentimentCompound + 1) / 2) * 100;
             document.getElementById('bar-sentiment').style.width = `${Math.max(0, Math.min(100, sentPercent))}%`;
@@ -439,34 +518,39 @@
             document.getElementById('bar-symbol').style.width = `${Math.max(0, Math.min(100, symPercent))}%`;
 
         } catch (err) {
+            if (err.name === 'AbortError') return;
             document.getElementById('val-note').innerText = '"Connection lost."';
             document.getElementById('val-explanation').innerText = "Make sure the Java and Python servers are running.";
-            toggleGeneration();
+            stopLoopCleanup();
             return;
+        } finally {
+            isFetching = false;
+            currentAbortController = null;
         }
 
         if (isGenerating) {
-            setTimeout(runEngineLoop, 15000);
+            loopTimer = setTimeout(runEngineLoop, 8000);
         }
     }
 
-    function switchView(viewName) {
+    function switchView(viewName, btnEl) {
         document.getElementById('split-view').style.display = viewName === 'split' ? 'flex' : 'none';
         document.getElementById('stats-view').style.display = viewName === 'stats' ? 'block' : 'none';
         document.getElementById('volume-view').style.display = viewName === 'volume' ? 'block' : 'none';
 
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        if (btnEl) btnEl.classList.add('active');
 
         if (viewName === 'volume') fetchVolume();
     }
 
     async function fetchVolume() {
+        const poetMode = document.getElementById('poet-selector').value;
         try {
-            const res = await fetch('/api/poem/volume');
+            const res = await fetch(`/api/poem/volume?poetMode=${poetMode}`);
             const poems = await res.json();
             const list = document.getElementById('volume-list');
-            list.innerHTML = poems.length === 0 ? '<p style="color:var(--text-muted);">No poems saved yet.</p>' : '';
+            list.innerHTML = poems.length === 0 ? '<p style="color:var(--text-muted);">No poems saved yet for this tradition.</p>' : '';
             poems.forEach(p => {
                 const item = document.createElement('div');
                 item.className = 'dashboard-card';

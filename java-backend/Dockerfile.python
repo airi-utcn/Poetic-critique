@@ -2,12 +2,14 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir flask flask-cors nltk textstat transformers \
-    torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+
+RUN pip install --no-cache-dir flask flask-cors nltk textstat transformers peft accelerate huggingface_hub
 
 COPY engine.py .
 
-RUN python -m nltk.downloader punkt vader_lexicon
+RUN python -m nltk.downloader punkt punkt_tab vader_lexicon
 
 EXPOSE 5000
 
